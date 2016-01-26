@@ -4,6 +4,7 @@ Contents:
 
 * Csource/ Source files and XCode project
 * matlab/ Matlab utilities for pre- and post-processing
+* python/ Python utilities for post-processing
 
 This software uses two external libraries:
 
