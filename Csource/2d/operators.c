@@ -1,13 +1,19 @@
-//
-//  operators.c
-//  euler
-//
-//  Created by Claudio Viotti on 7/10/13.
-//  Copyright (c) 2013 Claudio Viotti. All rights reserved.
-//
+/**
+ * @file operators.c
+ * @brief provides basic routines to use in the HOS euler model
+ *
+ * @author Claudio Viotti 
+ * @date 7/10/13
+ * @note Copyright (c) 2013 Claudio Viotti. All rights reserved.
+ */
 
 #include "operators.h"
 
+/**
+ * @brief Computes the discrete spectral derivative of hu in x-direction
+ * @param hu a fftw_complex pointer
+ * @param hu_x a fftw_complex pointer
+ */
 
 /* Spectral x-derivative */
 void Dx(fftw_complex* hu, fftw_complex* hu_x){
@@ -44,6 +50,11 @@ void Dx(fftw_complex* hu, fftw_complex* hu_x){
 
 }
 
+/**
+ * @brief Computes the discrete spectral derivative of hu in y-direction
+ * @param hu a fftw_complex pointer
+ * @param hu_y a fftw_complex pointer
+ */
 
 /* Spectral y-derivative */
 void Dy(fftw_complex* hu, fftw_complex* hu_y){
@@ -66,6 +77,12 @@ void Dy(fftw_complex* hu, fftw_complex* hu_y){
     }
 
 }
+
+/**
+ * @brief Computes the discrete derivative of hu in z-direction
+ * @param hu a fftw_complex pointer
+ * @param hu_z a fftw_complex pointer
+ */
 
 
 /* Spectral z-derivative for deep water */
@@ -111,7 +128,12 @@ void Dz(fftw_complex* hu, fftw_complex* hu_z){
 
 }
 
-
+/**
+ * @brief writes a fftw_complex pointer array into a larger array with zero-padding
+ *
+ * @param hu a fftw_complex array pointer
+ * @param hu_large a fftw_complex array pointer of larger dimension
+ */
 
 /* Copy a complex Nx*(Ny/2+1) array into a 3/2*Nx*(3*Ny/4+1) array with zero-padding */
 void Extend(fftw_complex* hu, fftw_complex* hu_large){
@@ -175,6 +197,14 @@ void Extend(fftw_complex* hu, fftw_complex* hu_large){
 
 }
 
+/**
+ * @brief Chops a complex 3/2*Nx-by-(3*Ny/4+1) array into a Nx-by-(Ny/2+1) array
+ *
+ * @param hu_large a fftw_complex array pointer
+ * @param hu a fftw_complex array pointer of lesser dimension
+ *
+ * @note This basically reverses "Extend"
+ */
 
 /* Chop a complex 3/2*Nx-by-(3*Ny/4+1) array into a Nx-by-(Ny/2+1) array */
 void Shrink(fftw_complex* hu_large, fftw_complex* hu){
@@ -222,6 +252,15 @@ void Shrink(fftw_complex* hu_large, fftw_complex* hu){
 }
 
 
+/**
+ * @brief computes a multiplication of two vectors using zero padding for dealiasing.
+ *
+ * @param hu1 a fftw_complex pointer
+ * @param hu2 a fftw_complex pointer
+ * @param hprod a fftw_complex pointer - the product of hu1 and hu2
+ */
+
+
 /* Compute dealiased product between two arrays. */
 /* The operation can be executed fully in-place hu1=hu2=hprod. */
 void MultDea(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hprod){
@@ -252,6 +291,15 @@ void MultDea(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hprod){
     
 }
 
+/**
+ * @brief compute product between two arrays
+ *
+ * @param hu1 a fftw_complex array pointer
+ * @param hu2 a fftw_complex array pointer
+ * @param hprod a fftw_complex array pointer - the product of hu1 and hu2
+ */
+
+
 /* Compute product between two arrays. */
 /* The operation can be executed fully in-place hu1=hu2=hprod. */
 void Mult(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hprod){
@@ -279,6 +327,14 @@ void Mult(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hprod){
     
 }
 
+
+/**
+ * @brief computes the sum of two arrays
+ *
+ * @param hu1 a fftw_complex array pointer
+ * @param hu2 a fftw_complex array pointer
+ * @param hsum a fftw_complex array pointer - the sum of hu1 and hu2
+ */
 
 void Sum(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hsum){
     
