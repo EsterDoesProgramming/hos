@@ -1,13 +1,23 @@
-//
-//  time_schemes.c
-//  euler
-//
-//  Created by Claudio Viotti on 3/9/13.
-//  Copyright (c) 2013 Claudio Viotti. All rights reserved.
-//
+/**
+ *  @file time_schemes.c
+ *  @brief Explicit timestepping routines to solve the Euler equations
+ *
+ *  @author Claudio Viotti 
+ *  @date 3/9/13
+ *  @note Copyright (c) 2013 Claudio Viotti. All rights reserved.
+ */
 
 #include "time_schemes.h"
 
+
+/**
+ * @brief Computes one time step of length dt of an Nstage Runge Kutta method 
+ * @param u a fftw_complex pointer
+ * @param t a double pointer
+ * @param dt a double
+ * @param dtflat a character pointer
+ * @return an updated version of u at time t
+ */
 
 void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
     
@@ -70,9 +80,22 @@ void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
 
 
 
+
+/**
+ * @brief Defines parameters for the Runge Kutta method
+ * @param scheme_flg an integer 
+ * @return Nstages an integer specifying the number of stages of the Runge Kutta method
+ * @return a a double array of size Nstages (coefficients c_j in standard Butcher table)
+ * @return b a double array pointer of size Nstages**2 (coefficients a_{ij} in standard Butcher table)
+ * @return c a double array of size Nstages (coefficients b_j in standard Butcher table)
+ * @return cs (optional) a double array of size Nstages (same)
+ * @return htemp a fftw_complex pointer of size fftw_complex*2*(N/2+1)
+ * @return fun a fftw_complex pointer to a pointer of size fftw_complex*Nstages
+ * @return funElem a fftw_complex pointer of size fftw_complex*2*(N/2+1)*Nstages
+ */
+
 void Setup_TimeScheme(int scheme_flg){
-    
-    
+        
     switch (scheme_flg) {
         case 1:
             Nstages = 7;
@@ -88,10 +111,10 @@ void Setup_TimeScheme(int scheme_flg){
     }
     
     
-    fun     = (fftw_complex**) fftw_malloc(sizeof(fftw_complex)*Nstages);
-    funElem = (fftw_complex*)  fftw_malloc(sizeof(fftw_complex)*2*(N/2+1)*Nstages);
+    fun     = (fftw_complex**) fftw_malloc (sizeof(fftw_complex)*Nstages);
+    funElem = (fftw_complex*)  fftw_malloc (sizeof(fftw_complex)*2*(N/2+1)*Nstages);
             
-    htemp = (fftw_complex*) fftw_malloc(sizeof(fftw_complex)*2*(N/2+1));
+    htemp   = (fftw_complex*)  fftw_malloc (sizeof(fftw_complex)*2*(N/2+1));
             
     a = malloc (sizeof(double)*Nstages);
     b = malloc (sizeof(double*)*Nstages);
