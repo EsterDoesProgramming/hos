@@ -1,13 +1,29 @@
-//
-//  hdf5_routines_2d.c
-//  euler
-//
-//  Created by Claudio Viotti on 6/24/13.
-//  Copyright (c) 2013 Claudio Viotti. All rights reserved.
-//
+/**
+ * @file  hdf5_routines_2d.c
+ * @brief HDF5 routines for the HOS Euler model
+ *
+ * @author Claudio Viotti
+ * @date   6/24/13.
+ * @note Copyright (c) 2013 Claudio Viotti. All rights reserved.
+ */
 
 #include "hdf5_routines_2d.h"
 
+
+/**
+ * @brief Routine to read in data from HDF5 files
+ *
+ * @param filename of type character
+ * @return Nx an integer - number of grid cells in x-direction
+ * @return Ny an integer - number of grid cells in y-direction
+ * @return Lx a double   - size of the domain in x-direction
+ * @return Ly a double   - size of the domain in y-direction
+ * @return runsubid an integer
+ * @return T a double      - the time point
+ * @return dtsave a double - the time grid spacing
+ * @return Kx0 a double  - discretization in frequency domain
+ * @return Ky0 a double  - discretization in frequency domain
+ */
 
 void get_params(char* filename){
     
@@ -53,6 +69,15 @@ void get_params(char* filename){
 }
 
 
+/**
+ * @brief Routine to read in initial condition from HDF5 files
+ *
+ * @param filename a character
+ * @param u1 a double pointer (e.g. pointing to sea surface deviation)
+ * @param u2 a double pointer (e.g. pointing to potential velocity)
+ * @return updated valus for u1 (eta0), and u2 (phi0)
+ */
+
 void get_ic_2d(char* filename, double* u1, double* u2){
     
     hid_t       h5_file, h5_data;
@@ -73,17 +98,30 @@ void get_ic_2d(char* filename, double* u1, double* u2){
     
 }
 
+/**
+ * @brief Creates a HDF5 file with 2d data
+ *
+ * @param filename a character pointer
+ * @return file an HDF5 file
+ */
+
 hid_t create_file_2d(char* filename){
     
     hid_t       file; //, data, fid1;
    
-    
+    /* H5F_ACC_TRUNC will overwrite exisiting files with the same name */
     file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     
     return file;
     
 }
 
+/**
+ * @brief Opens a HDF5 file with 2d data
+ *
+ * @param filename a character pointer
+ * @return file a HDF5 file
+ */
 
 hid_t open_file_2d(char* filename){
     
@@ -96,6 +134,12 @@ hid_t open_file_2d(char* filename){
     
 }
 
+/**
+ * @brief Closes a HDF5 file with 2d data
+ *
+ * @param filename a character pointer
+ * @return status an integer that indicates if the closing was successful
+ */
 
 herr_t close_file_2d(hid_t file){
     
@@ -108,6 +152,12 @@ herr_t close_file_2d(hid_t file){
     
 }
 
+/**
+ * @brief Writes a header for the HDF5 file for 2d data that includes the time and the domain discretization related parameters
+ *
+ * @param filename of type hid_t
+ * @param t a double
+ */
 
 void write_header_2d(hid_t file, double t){
     
@@ -145,6 +195,13 @@ void write_header_2d(hid_t file, double t){
     
 }
 
+/**
+ * @brief Writes the fields for eta and phi in a HDF5 file for 2d data
+ *
+ * @param file of type hid_t
+ * @param eta a double pointer that contains the sea surface deviation
+ * @param phi a double pointer that contains the potential velocity
+ */
 
 void write_field_2d(hid_t file, double* eta, double* phi){
     
@@ -177,7 +234,13 @@ void write_field_2d(hid_t file, double* eta, double* phi){
     
 }
 
-
+/**
+ * @brief Writes two additional fields in a HDF5 file for 2d data
+ *
+ * @param file of type hid_t
+ * @param Array1 a double pointer
+ * @param Array2 a double pointer
+ */
 
 void write_extra_2d(hid_t file, double* Array1, double* Array2){
     
