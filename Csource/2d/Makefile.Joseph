@@ -1,4 +1,4 @@
-CC=openmpicc
+CC=gcc #openmpicc
 CFLAGS=-c -O3 -std=gnu99
 LDFLAGS=-lfftw3_threads -lfftw3 -lhdf5 -lm
 SOURCES=main_2d.c model_2d.c time_schemes.c operators.c fft_routines_2d.c hdf5_routines_2d.c
