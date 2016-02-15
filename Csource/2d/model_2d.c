@@ -1,14 +1,22 @@
-//
-//  model_2d.c
-//  euler
-//
-//  Created by Claudio Viotti on 6/24/13.
-//  Copyright (c) 2013 Claudio Viotti. All rights reserved.
-//
+/**
+ * @file  model_2d.c
+ * @brief sets up the right-hand side of the euler equations that are solved with the HOS model
+ *
+ * @author Claudio Viotti
+ * @date 6/24/13.
+ * @note Copyright (c) 2013 Claudio Viotti. All rights reserved.
+ */
 
 
 #include "model_2d.h"
 #include "hdf5_routines_2d.h"
+
+/**
+ * @brief Test routine that can be used to switch off the rhs computation (for testing purposes)
+ *
+ * @param hrhs a fftw_complex array pointer
+ * @param hu a fftw_complex array pointer
+ */
 
 void rhs_test(fftw_complex* hrhs, fftw_complex* hu){
 
@@ -52,7 +60,10 @@ void rhs_test(fftw_complex* hrhs, fftw_complex* hu){
 }
 
 
-
+/**
+ * @brief Allocates quantities needed for RHS computation
+ * 
+ */
 
 void rhs_hos_setup(){
 
@@ -91,11 +102,23 @@ void rhs_hos_setup(){
 }
 
 
+
+/**
+ * @brief computes the right hand side of the HOS scheme according to West et al., 1987
+ *
+ * @param hrhs a fftw_complex array pointer
+ * @param hu a fftw_complex array pointer
+ * @param t a double
+ */
+
+
 /* HOS scheme (West et al. 1987) */
 void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
 
     int index, index_shift;
     
+    /* RHS for eta part */
+
     /* eta_x*phi_x + eta_y*phi_y */
     Dx(hu, htemp1);
     Dx(&hu[Nx*(Ny/2+1)], htemp2);
@@ -206,7 +229,16 @@ void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
 
 }
 
-
+/**
+ * @brief computes the vertical velocity on the free surface using the HOS scheme (West et al., 1987)
+ *
+ * @param hu a fftw_complex array pointer
+ * @param hwM a fftw_complex array ponter
+ * @param hwM2 a fftw_complex array pointer 
+ * @param hw2M a fftw_complex array pointer
+ * @param hw2M2 a fftw_complex array pointer
+ * @param t a double 
+ */
 
 /* Compute vertical velocity on the free surface. */
 /* HOS scheme (West et al. 1987) */
@@ -289,8 +321,8 @@ void Zvel(fftw_complex* hu, fftw_complex* hwM, fftw_complex* hwM2, fftw_complex*
     hetan[0] = 1.0;
 
 
-
-
+ 
+    /* Z-derivative of phi */
     Dz( &hu[Nx*(Ny/2+1)], hphin);
     
     
@@ -299,7 +331,7 @@ void Zvel(fftw_complex* hu, fftw_complex* hwM, fftw_complex* hwM2, fftw_complex*
         for (int j=0; j<Ny/2+1; j++) {
     
             index = (Ny/2+1)*i + j;
-            hwn[index] = hphin[index];
+            hwn[index] = hphin[index];    /* hwn -> phi_z */
     
         }
         
@@ -312,6 +344,7 @@ void Zvel(fftw_complex* hu, fftw_complex* hwM, fftw_complex* hwM2, fftw_complex*
     
         Nindex = n*(Nx*(Ny/2+1));
         
+	/* hetan[Nindex] -> eta**n */
         Mult(hu, &hetan[(n-1)*(Nx*(Ny/2+1))], &hetan[Nindex]);
 
         /* Phi_n */
@@ -325,6 +358,7 @@ void Zvel(fftw_complex* hu, fftw_complex* hwM, fftw_complex* hwM2, fftw_complex*
         
                 for (int j=0; j<Ny/2+1; j++) {
     
+		  /* summand of equation (12) Tanaka paper */
                     index = (Ny/2+1)*i + j;
                     hphin[Nindex + index] = hphin[Nindex + index] - htemp1[index]/Coeff[n-m];
              
@@ -340,6 +374,8 @@ void Zvel(fftw_complex* hu, fftw_complex* hwM, fftw_complex* hwM2, fftw_complex*
             Mindex = m*(Nx*(Ny/2+1));
         
             Dz( &hphin[Mindex], &hphin[Mindex]);
+
+	    /* eta**(Nindex-Mindex)*phi**(Mindex)_z */
             Mult( &hphin[Mindex], &hetan[Nindex - Mindex], htemp1);
             
             for (int i=0; i<Nx; i++) {
@@ -376,6 +412,8 @@ void Zvel(fftw_complex* hu, fftw_complex* hwM, fftw_complex* hwM2, fftw_complex*
         
             for (int j=0; j<Ny/2+1; j++) {
     
+
+	      /* sum over all levels */
                 index = (Ny/2+1)*i + j;
                 hwM[index] = hwM[index] + hwn[n*(Nx*(Ny/2+1)) + index];
                 hwM2[index] = hwM2[index] + hwn[n*(Nx*(Ny/2+1)) + index];
@@ -387,6 +425,8 @@ void Zvel(fftw_complex* hu, fftw_complex* hwM, fftw_complex* hwM2, fftw_complex*
     }
     
     //hwM
+
+    /* the remaining levels */
     for (int n=(NLevs-1); n<=NLevs; n++) {
         
         for (int i=0; i<Nx; i++) {
