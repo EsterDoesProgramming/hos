@@ -1,10 +1,11 @@
-//
-//  main_2d.c
-//  euler
-//
-//  Created by Claudio Viotti on 3/7/13.
-//  Copyright (c) 2013 Claudio Viotti. All rights reserved.
-//
+/**
+ * @file  main_2d.c
+ * @brief Main program: HOS method for Euler equations.
+ *
+ * @author Claudio Viotti 
+ * @date   3/7/13
+ * @note   Copyright (c) 2013 Claudio Viotti. All rights reserved.
+ */
 
 #include "euler_2d.h"
 
@@ -14,9 +15,16 @@
 #include "time_schemes.h"
 
 #define DIM 2
-#define M 4
+#define M 2
 #define BUFSIZE 256
 #define INIT_DATA_BUFSIZE 128
+
+
+/**
+ * @brief Main routine for the HOS model
+ *
+ *
+ */
 
 
 int main(int argc, char **argv)
@@ -133,6 +141,8 @@ int main(int argc, char **argv)
     ifft_2d(hphi, phi, ifftp);
   
     
+    /* Dealiasing */
+
     int mx, my, index;
     
     mx = floor( 0.5*Nx/(1 + 0.5*NLevs) );
@@ -172,7 +182,8 @@ int main(int argc, char **argv)
     status = close_file_2d(savefileid2);
     
     printf("Datafile written at t=%f\n",t);
-       
+
+    /* Time loop */
     while (t<T-0.00000001) {
         
         t_old = t;
