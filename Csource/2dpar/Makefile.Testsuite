@@ -1,0 +1,42 @@
+TSDIR := testsuite_$(shell date +%Y-%m-%d)
+
+testsuite: all tscompiletest clean tsinit tsgauss tsstokes tsjonswap      
+
+tscompiletest:
+	for i in `find . -name "*.o"`; do rm $${i%}; done 
+	for i in `find . -name "*.c"`; do make $${i%.c}.o; done
+	@echo
+	@echo "RESULT OF TEST COMPILATION:"
+	@for i in `find . -name "*.c"`; do if [ ! -f $${i%.c}.o ]; then echo $$i did not compile!; fi; done
+	@echo "All (other) modules compiled!"
+
+tsinit:
+	@mkdir $(TSDIR)                
+
+tstest:
+	@cp $(DATDIR)/initpars_jonswap_xiao_paper3.h5 initpars.h5
+	@cp $(DATDIR)/initdata_jonswap_xiao_paper3.h5 initdata.1.h5
+	@mpirun -np 4 euler_2d_par
+	@mkdir $(TSDIR)/test               
+	@mv data* $(TSDIR)/test/
+
+tsgauss:
+	@cp $(DATDIR)/initpars_TS_gauss.h5 initpars.h5
+	@cp $(DATDIR)/initdata_TS_gauss.h5 initdata.1.h5
+	@mpirun -np 4 euler_2d_par
+	@mkdir $(TSDIR)/gauss               
+	@mv data* $(TSDIR)/gauss/
+
+tsjonswap:
+	@cp $(DATDIR)/initpars_TS_jonswap.h5 initpars.h5
+	@cp $(DATDIR)/initdata_TS_jonswap.h5 initdata.1.h5
+	@mpirun -np 4 euler_2d_par
+	@mkdir $(TSDIR)/jonswap      
+	@mv data* $(TSDIR)/jonswap/
+
+tsstokes:
+	@cp $(DATDIR)/initpars_TS_stokes.h5 initpars.h5
+	@cp $(DATDIR)/initdata_TS_stokes.h5 initdata.1.h5
+	@mpirun -np 4 euler_2d_par
+	@mkdir $(TSDIR)/stokes   
+	@mv data* $(TSDIR)/stokes/
