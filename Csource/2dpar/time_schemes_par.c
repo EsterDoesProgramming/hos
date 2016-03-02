@@ -1,10 +1,11 @@
-//
-//  time_schemes.c
-//  euler
-//
-//  Created by Claudio Viotti on 3/9/13.
-//  Copyright (c) 2013 Claudio Viotti. All rights reserved.
-//
+/**
+ * @file  time_schemes.c
+ * @brief explicit Runge Kutta timestepping routines for parallel HOS model to solve 3D euler equations
+ *
+ * @author Claudio Viotti, Nicole Beisiegel
+ * @date   2/17/16
+ * @note   Copyright (c) 2013 Claudio Viotti. All rights reserved.
+ */
 
 #include "time_schemes_par.h"
 
@@ -178,7 +179,9 @@ void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
     
 }
 
-
+/**
+ * @brief Set up routine for Runge Kutta method
+ */
 
 void Setup_TimeScheme(int scheme_flg){
     
@@ -193,6 +196,18 @@ void Setup_TimeScheme(int scheme_flg){
             Nstages = 4;
         break;
 
+        case 3:
+	    Nstages = 1;
+	break;
+
+        case 4:
+	    Nstages = 2;
+	break;
+
+        case 5:
+	    Nstages = 2;
+        break;
+
         default:
         break;
 
@@ -202,11 +217,11 @@ void Setup_TimeScheme(int scheme_flg){
     fun = fftw_alloc_complex(2 * Nstages * alloc_local);
     htemp = fftw_alloc_complex(2 * alloc_local);
         
-    a = malloc (sizeof(double)*Nstages);
-    b = malloc (sizeof(double*)*Nstages);
+    a     = malloc (sizeof(double)*Nstages);
+    b     = malloc (sizeof(double*)*Nstages);
     bElem = malloc (sizeof(double)*(Nstages*Nstages));
-    c =  malloc (sizeof(double)*Nstages);
-    cs = malloc (sizeof(double)*Nstages);
+    c     = malloc (sizeof(double)*Nstages);
+    cs    = malloc (sizeof(double)*Nstages);
             
     for (n=0; n<Nstages; n++) {
         
@@ -303,6 +318,45 @@ void Setup_TimeScheme(int scheme_flg){
 
         break;
 
+	/* Low-order time integration schemes: cases 3,4 and 5. */
+
+        case 3:
+
+	  /* Euler's method */
+
+	  a[0] = 0.0;
+
+	  c[0] = 1.0;
+
+	break;
+
+        case 4:
+
+	  /* Two-stage Runge Kutta method - midpoint method*/
+
+	  a[0] = 0.0;
+	  a[1] = 0.5;
+
+	  b[1][0] = 0.5;
+
+	  c[0] = 0.0;
+	  c[1] = 1.0;
+
+        break;
+
+        case 5:
+
+	  /* Two-stage Runge Kutta method - Heun's method */
+
+	  a[0] = 0.0;
+	  a[1] = 1.0;
+
+	  b[1][0] = 1.0;
+
+	  c[0] = 0.5;
+	  c[1] = 0.5;
+
+	break;
 
         default:
     
