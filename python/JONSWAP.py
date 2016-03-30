@@ -38,17 +38,7 @@ def JONSWAP(omega, theta, **kwargs):
     
     # angular shift if needed
     theta = np.subtract(theta, theta_shift)
-
-    print theta
-    print np.amax(theta)
-    print np.amin(theta)
-
-
     theta = fetchtheta(theta)
-
-    print np.amax(theta)
-    print np.amin(theta)
-    print 'thetapar', ThetaPar
 
     omegadiff = np.subtract(omega, omega_p)
     sigmavec  = sigma(omega,omega_p)
@@ -58,14 +48,7 @@ def JONSWAP(omega, theta, **kwargs):
     
     # Filter Nyquist frequency - it's only small noise
     N = np.size(omega,1)
-
     const[N/2,N/2] = 0.0
-
-#    for k in np.arange(np.size(omega,1)):
-#        for l in np.arange(np.size(omega,1)):
-#            if np.isinf(const[k,l]): 
-#                print 'isnan const', k,l , omega[k,l]
-#                const[k,l] = 0.0
 
     exponent = np.multiply(-1.25,np.power(np.divide(omega,omega_p),-4))
 
@@ -73,10 +56,6 @@ def JONSWAP(omega, theta, **kwargs):
     Sj = np.multiply(np.multiply(const,np.exp(exponent)),np.power(gamma, delta))
     
     # The directional spreading function (Xiao et al. 2013: eq.(2.5))
-#    D =  np.multiply(2./ThetaPar,np.cos(np.min(np.abs(np.multiply(np.pi/ThetaPar,theta)),np.pi/2.))**2)
-
-    print 'ThetaPar', ThetaPar
-
     D = dirspread(theta,ThetaPar)
 
     # Directional spectrum

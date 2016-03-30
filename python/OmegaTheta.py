@@ -20,8 +20,6 @@ def  OmegaTheta( kx, ky, **kwargs ):
     depth_flag = 0  #1 for finite depth, 0 for deep water 
     if 'g' in kwargs: depth_flag = 1
         
-    print 'depth_flag', depth_flag
-
     # Set g=1 unless given as input
     g = kwargs.get('g', 1) 
     h = kwargs.get('h', 1000.0)
