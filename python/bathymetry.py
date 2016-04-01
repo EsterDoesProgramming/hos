@@ -14,13 +14,13 @@ import numpy
 ##
 # Initializes a zero bathymetry
 def bathy_zero(kx,ky):
-    return numpy.zeros(len(kx), len(ky))
+    return numpy.zeros((len(kx), len(ky)))
 
 ##
 # Initializes a constant bathymetry
 def bathy_constant(kx,ky):
     const = 34.0
-    return numpy.multiply(const, numpy.ones(len(kx), len(ky)))
+    return numpy.multiply(const, numpy.ones((len(kx), len(ky))))
 
 ##
 # Initializes a (in ky direction) linearly sloping bathymetry
