@@ -1,4 +1,11 @@
 import numpy as np
+import DtoF as DF
+import JONSWAP as J
+import OmegaTheta as OT
+
+
+def create_gauss():
+    return 0
 
 def create_jonswap(kx,ky):
     #-- JONSWAP Spectrum
@@ -48,3 +55,7 @@ def create_jonswap(kx,ky):
     phir    = phir/rescale
 
     return etar, phir
+
+
+def create_stokes(kx,ky):
+    return 0
