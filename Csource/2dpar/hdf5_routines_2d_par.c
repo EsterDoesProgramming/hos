@@ -1,10 +1,10 @@
-//
-//  hdf5_routines_2d.c
-//  euler
-//
-//  Created by Claudio Viotti on 6/24/13.
-//  Copyright (c) 2013 Claudio Viotti. All rights reserved.
-//
+/**
+ * @file  hdf5_routines_2d_par.c
+ * @brief Parallelized HDF5 routines for the HOS Euler model
+ *
+ * @author Claudio Viotti, Nicole Beisiegel
+ * @date   06/24/2013.
+ */
 
 #include "hdf5_routines_2d_par.h"
 #include "fft_routines_2d_par.h"
@@ -90,7 +90,7 @@ void get_params(char* filename){
 }
 
 
-void get_ic_2d(char* filename, double* u1, double* u2){
+void get_ic_2d(char* filename, double* u1, double* u2, double* u3){
     
     hid_t       h5_file, h5_dataset, h5_memspace, h5_filespace;
     herr_t      status;
@@ -143,6 +143,24 @@ void get_ic_2d(char* filename, double* u1, double* u2){
         for (j=0; j<Ny; j++) {
             
             u2[(Ny+2)*i + j]=temp1[Ny*i + j];
+            
+        }
+        
+    }
+    h5_dataset = H5Dopen(h5_file, "/bat0", H5P_DEFAULT);
+    
+    h5_memspace = H5Screate_simple(RANK, count, NULL);
+    h5_filespace = H5Dget_space(h5_dataset);
+    H5Sselect_hyperslab(h5_filespace, H5S_SELECT_SET, offset, NULL, count, NULL);
+    
+    /* Read bathymetry  data and write it inside a temporary array, then copy the data inside the padded target array */
+    status = H5Dread(h5_dataset, H5T_IEEE_F64LE, h5_memspace, h5_filespace, H5P_DEFAULT, temp1);
+    
+    for (i=0; i<local_Nx; i++) {
+        
+        for (j=0; j<Ny; j++) {
+            
+            u3[(Ny+2)*i + j]=temp1[Ny*i + j];
             
         }
         
@@ -253,7 +271,7 @@ void write_header_2d(hid_t file, double time){
 }
 
 
-void write_field_2d(hid_t h5_file, double* eta, double* phi){
+void write_field_2d(hid_t h5_file, double* eta, double* phi, double* bat){
     
 
     hid_t       h5_dataset, h5_memspace, h5_filespace;
@@ -331,6 +349,37 @@ void write_field_2d(hid_t h5_file, double* eta, double* phi){
     H5Sclose(h5_memspace);
     H5Pclose(plist_id);
     
+
+    h5_filespace = H5Screate_simple(RANK, dimsf, NULL);
+    h5_dataset = H5Dcreate(h5_file, "bat", H5T_IEEE_F64LE, h5_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Sclose(h5_filespace);
+
+    h5_memspace = H5Screate_simple(RANK, count, NULL);
+
+    h5_filespace = H5Dget_space(h5_dataset);
+    H5Sselect_hyperslab(h5_filespace, H5S_SELECT_SET, offset, NULL, count, NULL);
+    
+    plist_id = H5Pcreate(H5P_DATASET_XFER);
+    
+    /* Copy data inside a temporary array to remove padding, then write inside the datafile */
+    for (i=0; i<local_Nx; i++) {
+        
+        for (j=0; j<Ny; j++) {
+            
+            temp1[Ny*i + j] = bat[(Ny+2)*i + j];
+            
+        }
+        
+    }
+    
+    status = H5Dwrite(h5_dataset, H5T_IEEE_F64LE, h5_memspace, h5_filespace, plist_id, temp1);
+   
+    H5Dclose(h5_dataset);
+    H5Sclose(h5_filespace);
+    H5Sclose(h5_memspace);
+    H5Pclose(plist_id);
+    
+
     
 }
 

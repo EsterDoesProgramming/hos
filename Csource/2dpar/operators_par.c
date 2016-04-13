@@ -1,12 +1,19 @@
-//
-//  operators.c
-//  euler
-//
-//  Created by Claudio Viotti on 7/10/13.
-//  Copyright (c) 2013 Claudio Viotti. All rights reserved.
-//
+/**
+ * @file operators_par.c
+ * @brief provides basic routines to compute derivatives for use in the HOS euler model
+ *
+ * @author Claudio Viotti 
+ * @date 7/10/13
+ * @note Copyright (c) 2013 Claudio Viotti. All rights reserved.
+ */
 
 #include "operators_par.h"
+
+/**
+ * @brief Computes the discrete spectral derivative of hu in x-direction
+ * @param hu a fftw_complex pointer
+ * @param hu_x a fftw_complex pointer that contains the derivative
+ */
 
 /* Spectral x-derivative */
 void Dx(fftw_complex* hu, fftw_complex* hu_x){
@@ -64,6 +71,11 @@ void Dx(fftw_complex* hu, fftw_complex* hu_x){
 
 }
 
+/**
+ * @brief Computes the discrete spectral derivative of hu in y-direction
+ * @param hu a fftw_complex pointer
+ * @param hu_y a fftw_complex pointer
+ */
 
 /* Spectral y-derivative */
 void Dy(fftw_complex* hu, fftw_complex* hu_y){
@@ -100,13 +112,20 @@ void Dy(fftw_complex* hu, fftw_complex* hu_y){
 
 }
 
+/**
+ * @brief Computes the discrete derivative of hu in z-direction
+ * @param hu a fftw_complex pointer
+ * @param hu_z a fftw_complex pointer
+ */
 
 /* Spectral z-derivative for deep water */
 void Dz(const fftw_complex* hu, fftw_complex* hu_z){
 
 
     ptrdiff_t index;
-    double kx, ky, kz;
+    double kx, ky, kz, tkh, h;
+    
+    h = 1000;
 
 #if FFT_TRANSPOSE == 0
     for (i=0; i<local_Nx; i++) {
@@ -126,9 +145,11 @@ void Dz(const fftw_complex* hu, fftw_complex* hu_z){
             ky = j*Ky0;
             kz = kx*kx + ky*ky;
             kz = sqrt(kz);
+
+	    tkh = tanh(kz*h)
     
             index = (Ny/2+1)*i + j;
-            hu_z[index] = kz*hu[index];
+            hu_z[index] = kz*tkh*hu[index];
 
         }
         
@@ -165,6 +186,13 @@ void Dz(const fftw_complex* hu, fftw_complex* hu_z){
 }
 
 
+/**
+ * @brief compute product between two arrays
+ *
+ * @param hu1 a fftw_complex array pointer
+ * @param hu2 a fftw_complex array pointer
+ * @param hprod a fftw_complex array pointer - the product of hu1 and hu2
+ */
 
 /* Compute product between two arrays. */
 /* The operation can be executed fully in-place hu1=hu2=hprod. */
@@ -193,6 +221,14 @@ void Mult(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hprod){
     
 }
 
+
+/**
+ * @brief computes the sum of two arrays
+ *
+ * @param hu1 a fftw_complex array pointer
+ * @param hu2 a fftw_complex array pointer
+ * @param hsum a fftw_complex array pointer - the sum of hu1 and hu2
+ */
 
 void Sum(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hsum){
     

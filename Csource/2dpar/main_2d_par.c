@@ -1,10 +1,10 @@
-//
-//  main_2d.c
-//  euler
-//
-//  Created by Claudio Viotti on 3/7/13.
-//  Copyright (c) 2013 Claudio Viotti. All rights reserved.
-//
+/**
+ * @file  main_2d_par.c
+ * @brief High-order spectral model for 3D water wave simulations (Main Module).
+ *
+ * @author Claudio Viotti, Nicole Beisiegel
+ * @date   03/07/2015.
+ */
 
 #define DIM 3
 #define BUFSIZE 256
@@ -22,7 +22,7 @@
 #include "model_2d_par.h"
 #include "time_schemes_par.h"
 #include "operators_par.h"
-
+#include "time.h"
 
 
 #if THREADS == 1
@@ -32,17 +32,23 @@
 int main(int argc, char **argv)
 {
     
-    
     int         scheme_flg, nfld;
-    double      *eta, *phi;
+    double      *eta, *phi, *phib, *phitotal, *bat;
     double      *velwM, *velwM2;
     //double      *velw2M, *velw2M2;
     double      t, dt, t_old;
     char        init_data_buff[INIT_DATA_BUFSIZE], init_pars_buff[INIT_DATA_BUFSIZE], subid_buff[2], nfld_buff[5], dtflag[20];
     
-    fftw_complex    *heta, *hphi;
+    fftw_complex    *heta, *hphi, *hphib, *hphitotal;
     fftw_complex    *hvelwM, *hvelwM2, *hvelw2M, *hvelw2M2;
+    clock_t       beginTime, endTime;
+    double        time_spent;
 
+    if (mpi_rank == 0) {
+
+    beginTime = clock();
+
+    }
     
     comm  = MPI_COMM_WORLD;
     info  = MPI_INFO_NULL;
@@ -127,17 +133,24 @@ int main(int argc, char **argv)
     printf("Process %d:\tlocal size = %td,\tlocal x-size = %td,\tlocal y-size (transp-out) = %td.\n",mpi_rank,alloc_local,local_Nx,local_Nyhpo);
 
 
-    eta = fftw_alloc_real(4 * alloc_local);
-    heta = fftw_alloc_complex(2 * alloc_local);
+    //eta = fftw_alloc_real(4 * alloc_local);
+    //heta = fftw_alloc_complex(2 * alloc_local);
+    eta  = fftw_alloc_real(6 * alloc_local);
+    heta = fftw_alloc_complex(3 * alloc_local);
+    bat  = fftw_alloc_real(alloc_local);
 
-    phi = &eta[2 * alloc_local];
+    phi  = &eta[2 * alloc_local];
     hphi = &heta[alloc_local];
+
+    //potential velocity wrt bathy
+    phib  = &eta[4 * alloc_local];
+    hphib = &heta[2*alloc_local];
 
     f = fftw_alloc_real(2 * alloc_local);
     hf = fftw_alloc_complex(alloc_local);
     
     
-    temp1 = fftw_alloc_real(2 * alloc_local);
+    temp1    = fftw_alloc_real(2 * alloc_local);
     velwM    = fftw_alloc_real(2 * alloc_local);
     velwM2   = fftw_alloc_real(2 * alloc_local);
     //velw2M   = fftw_alloc_real(2 * alloc_local);
@@ -164,10 +177,10 @@ int main(int argc, char **argv)
     
 
     /* Read initial data */
-    get_ic_2d(init_data_buff, eta, phi);
+    get_ic_2d(init_data_buff, eta, phi, bat);
 
     /* Setup temporal scheme. */
-    scheme_flg=2;
+    scheme_flg=4;
     Setup_TimeScheme(scheme_flg);
     rhs_hos_setup();
     
@@ -188,7 +201,7 @@ int main(int argc, char **argv)
     /* Save initial snapshot */
     savefileid = create_file_2d(savefile_buff);
     write_header_2d(savefileid, t);
-    write_field_2d(savefileid, eta, phi);
+    write_field_2d(savefileid, eta, phi, bat);
     status = close_file_2d(savefileid);
     
     if (mpi_rank == 0) {
@@ -237,7 +250,7 @@ int main(int argc, char **argv)
     
             savefileid = create_file_2d(savefile_buff);
             write_header_2d(savefileid, t);
-            write_field_2d(savefileid, eta, phi);
+            write_field_2d(savefileid, eta, phi, bat);
             status = close_file_2d(savefileid);
             
             if (mpi_rank==0) {
@@ -270,14 +283,21 @@ int main(int argc, char **argv)
     }
     
     
-    
     fftw_destroy_plan(fftp);
     fftw_destroy_plan(ifftp);
     free(eta);
     fftw_free(heta);
     
     MPI_Finalize();
-    
+
+    if (mpi_rank == 0) {
+
+    endTime = clock();
+    time_spent = (double)(endTime - beginTime) / CLOCKS_PER_SEC;
+    printf("Total computational time: %10.2f s.\n", time_spent);
+
+    }
+
     return 0;
     
 }

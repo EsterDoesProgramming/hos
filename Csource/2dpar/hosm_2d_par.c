@@ -1,5 +1,5 @@
 /**
- * @file  hosm.c
+ * @file  hosm_2d_par.c
  * @brief HOS model adapted from model_2d_par.c with modification for Multiwave project
  *
  * @author Joseph Brennan

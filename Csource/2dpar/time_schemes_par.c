@@ -1,5 +1,5 @@
 /**
- * @file  time_schemes.c
+ * @file  time_schemes_par.c
  * @brief explicit Runge Kutta timestepping routines for parallel HOS model to solve 3D euler equations
  *
  * @author Claudio Viotti, Nicole Beisiegel

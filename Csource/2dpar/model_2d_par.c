@@ -1,10 +1,11 @@
-//
-//  model_2d.c
-//  euler
-//
-//  Created by Claudio Viotti on 6/24/13.
-//  Copyright (c) 2013 Claudio Viotti. All rights reserved.
-//
+/**
+ * @file  model_2d_par.c
+ * @brief sets up the right-hand side of the euler equations that are solved with the HOS model
+ *
+ * @author Claudio Viotti
+ * @date 6/24/13.
+ * @note Copyright (c) 2013 Claudio Viotti. All rights reserved.
+ */
 
 
 #include "model_2d_par.h"
@@ -163,6 +164,17 @@ void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
 
 
 
+/**
+ * @brief computes the vertical velocity on the free surface using the HOS scheme (West et al., 1987)
+ *
+ * @param hu a fftw_complex array pointer
+ * @param hZvelM a fftw_complex array ponter
+ * @param hZvelM2 a fftw_complex array pointer 
+ * @param hZvel2M a fftw_complex array pointer
+ * @param hZvel2M2 a fftw_complex array pointer
+ * @param t a double 
+ */
+
 /* Compute vertical velocity on the free surface. */
 /* HOS scheme (West et al. 1987) */
 void Zvel(fftw_complex* hu, fftw_complex* hZvelM, fftw_complex* hZvelM2, fftw_complex* hZvel2M, fftw_complex* hZvel2M2, double t){
@@ -196,11 +208,13 @@ void Zvel(fftw_complex* hu, fftw_complex* hZvelM, fftw_complex* hZvelM2, fftw_co
         hetan[0] = 1.0;
     }
     
+
+    /* Z-derivative of phi */
     Dz( &hu[alloc_local], hphin);
     
     for (i=0; i<local_N; i++) {
 
-            hwn[i] = hphin[i];
+      hwn[i] = hphin[i]; /* hwn --> phi_z */
         
     }
 
@@ -208,6 +222,7 @@ void Zvel(fftw_complex* hu, fftw_complex* hZvelM, fftw_complex* hZvelM2, fftw_co
     
         Nindex = n*alloc_local;
         
+	/* hetan[Nindex] --> eta**n */
         Mult(hu, &hetan[(n-1)*alloc_local], &hetan[Nindex]);
 
         /* Phi_n */
@@ -215,6 +230,7 @@ void Zvel(fftw_complex* hu, fftw_complex* hZvelM, fftw_complex* hZvelM2, fftw_co
     
             Mindex = m*alloc_local;
             
+	    /* htemp1 --> (phi_m)_z * eta**(n-m) */
             Mult( &hphin[Mindex], &hetan[Nindex - Mindex], htemp1);
                 
             for (i=0; i<local_N; i++) {
