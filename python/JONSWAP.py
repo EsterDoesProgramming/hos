@@ -30,8 +30,7 @@ def JONSWAP(omega, theta, **kwargs):
     # default parameters
     g           = kwargs.get('g', 1.0)
     alpha_p     = kwargs.get('alpha_p', 2*np.pi*0.014/10) # 0.0081
-    #omega_p     = kwargs.get('omega_p', 1)
-    omega_p     = kwargs.get('omega_p', 2*np.pi)
+    omega_p     = kwargs.get('omega_p', 2*np.pi)          # 1.0
     gamma       = kwargs.get('gamma', 6)
     ThetaPar    = kwargs.get('ThetaPar', 12*np.pi/180)
     theta_shift = kwargs.get('theta_shift', 0.0)

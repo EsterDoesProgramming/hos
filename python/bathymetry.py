@@ -13,21 +13,20 @@ import numpy
 
 ##
 # Initializes a zero bathymetry
-def bathy_zero(kx,ky):
+def bathy_zero(kx,ky,**kwargs):
     return numpy.zeros((len(kx), len(ky)))
 
 ##
 # Initializes a constant bathymetry
-def bathy_constant(kx,ky):
-    const = 34.0
-    return numpy.multiply(const, numpy.ones((len(kx), len(ky))))
+def bathy_constant(kx,ky,**kwargs):
+    Param = kwargs.get('parameters', None)
+    return numpy.multiply(Param['base'], numpy.ones((len(kx), len(ky))))
 
 ##
 # Initializes a (in ky direction) linearly sloping bathymetry
-def bathy_linear(kx,ky):
-    base  = 10.
-    slope = 5.
-    return numpy.ones((len(kx),1))*(slope*(ky+ky[-1]))+base
+def bathy_linear(kx,ky,**kwargs):
+    Param = kwargs.get('parameters', None)
+    return numpy.ones((len(kx),1))*(float(Param['slope'])*(ky+ky[-1]))+Param['base']
 
 ##
 # Creates an array of bathymetry data corresponding to the input argument Type.
@@ -43,13 +42,14 @@ def create_bathymetry(kx,ky,**kwargs):
     Ny = len(ky)
 
     bathy_flag = kwargs.get('Type',"zero")
+    param = kwargs.get('Param',None)
 
     switch = {'zero': bathy_zero, 
               'constant': bathy_constant,
               'linear': bathy_linear}
 
     if bathy_flag in switch:
-        bathy = switch[bathy_flag](kx,ky)
+        bathy = switch[bathy_flag](kx,ky,parameters = param)
     else: print "Bathymetry type not supported. Please check create_bathymetry.py for options."
     
     return bathy
