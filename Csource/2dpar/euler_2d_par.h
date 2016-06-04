@@ -67,6 +67,7 @@ double      Tramp;
 /* Definitions global for debugging pourpose */
 hid_t       savefileid;
 hid_t       savefileid2;
+hid_t       FileID;
 char        savefile_buff[SAVE_FILE_BUFSIZE];
 char        savefile2_buff[SAVE_FILE_BUFSIZE];
 herr_t      status;

@@ -383,6 +383,44 @@ void write_field_2d(hid_t h5_file, double* eta, double* phi, double* bat){
     
 }
 
+void write_coordinates_2d(hid_t h5_file, double* coords){
+
+    hid_t       h5_dataset, h5_memspace, h5_filespace;
+    herr_t      status;
+    hid_t       plist_id;
+    hsize_t     dimsf[2], count[2], offset[2];
+    
+    
+    plist_id = H5Pcreate(H5P_DATASET_XFER);
+    
+    dimsf[0] = Nx*Ny;
+    dimsf[1] = 2;
+
+    count[0] = dimsf[0]/mpi_size;
+    count[1] = dimsf[1];
+
+    offset[0] = mpi_rank * count[0];
+    offset[1] = 0;
+    
+    /* Create HDF5 file */
+    h5_filespace = H5Screate_simple(RANK, dimsf, NULL);
+    h5_dataset = H5Dcreate(h5_file, "xy", H5T_IEEE_F64LE, h5_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Sclose(h5_filespace);
+
+    h5_memspace = H5Screate_simple(RANK, count, NULL);
+
+    h5_filespace = H5Dget_space(h5_dataset);
+    H5Sselect_hyperslab(h5_filespace, H5S_SELECT_SET, offset, NULL, count, NULL);
+    
+    plist_id = H5Pcreate(H5P_DATASET_XFER);   
+    status = H5Dwrite(h5_dataset, H5T_IEEE_F64LE, h5_memspace, h5_filespace, plist_id, coords);
+   
+    H5Dclose(h5_dataset);
+    H5Sclose(h5_filespace);
+    H5Sclose(h5_memspace);
+    H5Pclose(plist_id); 
+
+}
 
 void write_extra_2d(hid_t h5_file, double* array1, double* array2){
     
@@ -464,5 +502,4 @@ void write_extra_2d(hid_t h5_file, double* array1, double* array2){
     
     
 }
-
 

@@ -23,6 +23,7 @@
 #include "time_schemes_par.h"
 #include "operators_par.h"
 #include "time.h"
+#include "xdmf_routines_2d_par.h"
 
 
 #if THREADS == 1
@@ -39,10 +40,11 @@ int main(int argc, char **argv)
     double      t, dt, t_old;
     char        init_data_buff[INIT_DATA_BUFSIZE], init_pars_buff[INIT_DATA_BUFSIZE], subid_buff[2], nfld_buff[5], dtflag[20];
     
-    fftw_complex    *heta, *hphi, *hphib, *hphitotal;
+    fftw_complex    *heta, *hphi, *hphib, *hphitotal, *hbat;
     fftw_complex    *hvelwM, *hvelwM2, *hvelw2M, *hvelw2M2;
     clock_t       beginTime, endTime;
     double        time_spent;
+    FILE          *xmlfile;
 
     if (mpi_rank == 0) {
 
@@ -133,18 +135,20 @@ int main(int argc, char **argv)
     printf("Process %d:\tlocal size = %td,\tlocal x-size = %td,\tlocal y-size (transp-out) = %td.\n",mpi_rank,alloc_local,local_Nx,local_Nyhpo);
 
 
-    //eta = fftw_alloc_real(4 * alloc_local);
-    //heta = fftw_alloc_complex(2 * alloc_local);
-    eta  = fftw_alloc_real(6 * alloc_local);
-    heta = fftw_alloc_complex(3 * alloc_local);
-    bat  = fftw_alloc_real(alloc_local);
+    eta = fftw_alloc_real(4 * alloc_local);
+    heta = fftw_alloc_complex(2 * alloc_local);
+    //eta  = fftw_alloc_real(6 * alloc_local);
+    //heta = fftw_alloc_complex(3 * alloc_local);
+
+    bat  = fftw_alloc_real(2 * alloc_local);
+    hbat = fftw_alloc_complex(alloc_local);
 
     phi  = &eta[2 * alloc_local];
     hphi = &heta[alloc_local];
 
     //potential velocity wrt bathy
-    phib  = &eta[4 * alloc_local];
-    hphib = &heta[2*alloc_local];
+    //phib  = &eta[4 * alloc_local];
+    //hphib = &heta[2*alloc_local];
 
     f = fftw_alloc_real(2 * alloc_local);
     hf = fftw_alloc_complex(alloc_local);
@@ -203,6 +207,9 @@ int main(int argc, char **argv)
     write_header_2d(savefileid, t);
     write_field_2d(savefileid, eta, phi, bat);
     status = close_file_2d(savefileid);
+
+    xmlfile = fopen("xmlfile.xmf","w");
+    init_xml(xmlfile,t,Nx,Ny,Lx,Ly);
     
     if (mpi_rank == 0) {
             printf("Datafile '%s' written at t=%f\n",savefile_buff,t);
@@ -252,7 +259,9 @@ int main(int argc, char **argv)
             write_header_2d(savefileid, t);
             write_field_2d(savefileid, eta, phi, bat);
             status = close_file_2d(savefileid);
-            
+ 
+	    write_xml(xmlfile,t,savefile_buff);
+           
             if (mpi_rank==0) {
                 printf("Datafile '%s' written at t=%f\n",savefile_buff,t);
             }
@@ -282,7 +291,8 @@ int main(int argc, char **argv)
         
     }
     
-    
+    close_xml(xmlfile);
+
     fftw_destroy_plan(fftp);
     fftw_destroy_plan(ifftp);
     free(eta);
