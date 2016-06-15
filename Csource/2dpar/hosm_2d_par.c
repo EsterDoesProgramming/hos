@@ -9,12 +9,21 @@
 
 #include "hosm_2d_par.h"
 
+#ifdef USE_DOUBLES
 static fftw_complex*   hwn;
 static fftw_complex*   hwM;
 static fftw_complex*   hwM2;
 static fftw_complex*   hw2M;
 static fftw_complex*   hw2M2;
-static double*         Coeff;
+#else
+static fftwf_complex*   hwn;
+static fftwf_complex*   hwM;
+static fftwf_complex*   hwM2;
+static fftwf_complex*   hw2M;
+static fftwf_complex*   hw2M2;
+#endif 
+
+static TYPE_REAL*         Coeff;
 
 /**
  * @brief right hand side for linear advection
@@ -23,8 +32,12 @@ static double*         Coeff;
  * @param hu   a fftw_complex array pointer
  */
 
+#ifdef USE_DOUBLES
 void rhs_test(fftw_complex* hrhs, fftw_complex* hu){
-    
+#else
+void rhs_test(fftwf_complex* hrhs, fftwf_complex* hu){
+#endif
+
     // Linear advection
     Dx(hu, hrhs);
     Dy(&hu[alloc_local], &hrhs[alloc_local]);
@@ -39,6 +52,8 @@ void rhs_hos_setup(){
     
     int n;
     
+    #ifdef USE_DOUBLES
+
     temp1 = fftw_alloc_real(2 * alloc_local);
     temp2 = fftw_alloc_real(2 * alloc_local);
     htemp1 = fftw_alloc_complex(2 * alloc_local);
@@ -52,8 +67,26 @@ void rhs_hos_setup(){
     hwM2 = fftw_alloc_complex(alloc_local);   // W^(M-2)
     hw2M = fftw_alloc_complex(alloc_local);   // (W^2)^(M)
     hw2M2 = fftw_alloc_complex(alloc_local);  // (W^2)^(M-2)
+
+    #else
+
+    temp1 = fftwf_alloc_real(2 * alloc_local);
+    temp2 = fftwf_alloc_real(2 * alloc_local);
+    htemp1 = fftwf_alloc_complex(2 * alloc_local);
+    htemp2 = &htemp1[alloc_local];
     
-    Coeff = malloc(sizeof(double)*(NLevs+1)); //factorial component of expansion for phi and W
+    hetan = fftwf_alloc_complex((NLevs+1)*alloc_local); //Nlevs of heta
+    hphin = fftwf_alloc_complex((NLevs+1)*alloc_local); //Nlevs pf hphi
+    hwn   = fftwf_alloc_complex((NLevs+1)*alloc_local); //Nlevs of hwn
+    
+    hwM = fftwf_alloc_complex(alloc_local);    // W^(M)
+    hwM2 = fftwf_alloc_complex(alloc_local);   // W^(M-2)
+    hw2M = fftwf_alloc_complex(alloc_local);   // (W^2)^(M)
+    hw2M2 = fftwf_alloc_complex(alloc_local);  // (W^2)^(M-2)
+
+    #endif
+
+    Coeff = malloc(sizeof(TYPE_REAL)*(NLevs+1)); //factorial component of expansion for phi and W
     Coeff[0] = 1.0;
     Coeff[1] = 1.0;
     
@@ -70,6 +103,7 @@ void rhs_hos_setup(){
 
 void rhs_hos_clean(){
     
+  #if USE_DOUBLES
     fftw_free(temp1);
     fftw_free(temp2);
     fftw_free(htemp1);
@@ -81,14 +115,30 @@ void rhs_hos_clean(){
     fftw_free(hwM2);
     fftw_free(hw2M);
     fftw_free(hw2M2);
+  #else
+    fftwf_free(temp1);
+    fftwf_free(temp2);
+    fftwf_free(htemp1);
+    fftwf_free(htemp2);
+    fftwf_free(hetan);
+    fftwf_free(hphin);
+    fftwf_free(hwn);
+    fftwf_free(hwM);
+    fftwf_free(hwM2);
+    fftwf_free(hw2M);
+    fftwf_free(hw2M2);
+  #endif
 
     free(Coeff);
     
 }
 
 /* HOS scheme (West et al. 1987) */
-void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
-    
+#ifdef USE_DOUBLES
+void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, TYPE_REAL t){
+#else
+void rhs_hos(fftwf_complex* hrhs, fftwf_complex* hu, TYPE_REAL t){
+#endif
    
     ptrdiff_t index, index_shift;
     
@@ -186,8 +236,12 @@ void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
 
 /* Compute vertical velocity on the free surface. */
 /* HOS scheme (West et al. 1987) */
-void Zvel(fftw_complex* hu, fftw_complex* hZvelM, fftw_complex* hZvelM2, fftw_complex* hZvel2M, fftw_complex* hZvel2M2, double t){
-    
+#ifdef USE_DOUBLES
+void Zvel(fftw_complex* hu, fftw_complex* hZvelM, fftw_complex* hZvelM2, fftw_complex* hZvel2M, fftw_complex* hZvel2M2, TYPE_REAL t){
+#else
+void Zvel(fftwf_complex* hu, fftwf_complex* hZvelM, fftwf_complex* hZvelM2, fftwf_complex* hZvel2M, fftwf_complex* hZvel2M2, TYPE_REAL t){
+#endif
+
     // hZvelM   -> W^(M)
     // hZvelM2  -> W^(M-2)
     // hZvel2M  -> (W^2)^(M)
@@ -390,8 +444,12 @@ void Zvel(fftw_complex* hu, fftw_complex* hZvelM, fftw_complex* hZvelM2, fftw_co
     
 }
 /* Compute vertical velocity on the free surface at linear order. */
+#ifdef USE_DOUBLES
 void ZvelLinear(const fftw_complex* hu, fftw_complex* hZvelLinear){
-    
+#else
+void ZvelLinear(const fftwf_complex* hu, fftwf_complex* hZvelLinear){
+#endif
+
     Dz(&hu[alloc_local], hZvelLinear);
     
 }
@@ -400,21 +458,38 @@ void ZvelLinear(const fftw_complex* hu, fftw_complex* hZvelLinear){
  * @brief Compute the Hamiltonian for the HOS system, as given in West et al. 1987, eq. 8.
  */
 
-double Hamiltonian(const fftw_complex* heta, const fftw_complex* heta_t, const fftw_complex* hphi){
-    
+#ifdef USE_DOUBLES
+TYPE_REAL Hamiltonian(const fftw_complex* heta, const fftw_complex* heta_t, const fftw_complex* hphi){
+#else
+TYPE_REAL Hamiltonian(const fftwf_complex* heta, const fftwf_complex* heta_t, const fftwf_complex* hphi){
+#endif
+
     ptrdiff_t index;
-    double H;
+    TYPE_REAL H;
     
     H = 0.0;
     
     /* j=0 */
     for (i=0; i < Nx; i++)
     {
+
+      #ifdef USE_DOUBLES
+
         H += g*creal(heta[i])*creal(heta[i]);
         H += g*cimag(heta[i])*cimag(heta[i]);
         
         H += creal(hphi[i])*creal(heta_t[i]);
         H += cimag(hphi[i])*cimag(heta_t[i]);
+
+      #else
+
+        H += g*crealf(heta[i])*crealf(heta[i]);
+        H += g*cimagf(heta[i])*cimagf(heta[i]);
+        
+        H += crealf(hphi[i])*crealf(heta_t[i]);
+        H += cimagf(hphi[i])*cimagf(heta_t[i]);
+
+      #endif
     }
     
     for (j=1; j<local_Nyhpo; j++)
@@ -422,12 +497,24 @@ double Hamiltonian(const fftw_complex* heta, const fftw_complex* heta_t, const f
         for (i=0; i < Nx; i++)
         {
             index = Nx*j + i;
+
+	  #ifdef USE_DOUBLES
             
             H += 2*g*creal(heta[index])*creal(heta[index]);
             H += 2*g*cimag(heta[index])*cimag(heta[index]);
             
             H += 2*creal(hphi[index])*creal(heta_t[index]);
             H += 2*cimag(hphi[index])*cimag(heta_t[index]);
+
+	  #else
+
+            H += 2*g*crealf(heta[index])*crealf(heta[index]);
+            H += 2*g*cimagf(heta[index])*cimagf(heta[index]);
+            
+            H += 2*crealf(hphi[index])*crealf(heta_t[index]);
+            H += 2*cimagf(hphi[index])*cimagf(heta_t[index]);
+
+	  #endif
         }
     }
     
@@ -436,7 +523,7 @@ double Hamiltonian(const fftw_complex* heta, const fftw_complex* heta_t, const f
 }
 
 /* Ramping function used for Dommermuth adjusted initialization (D. Dommermuth, Wave Motion, Vol 32, 2000). */
-double RampFun(const double t){
+TYPE_REAL RampFun(const TYPE_REAL t){
     
     return ( 1 - exp(-t*t/Tramp/Tramp) );
     

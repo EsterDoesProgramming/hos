@@ -9,6 +9,12 @@
 #include "xdmf_routines_2d_par.h"
 #include "hdf5_routines_2d_par.h"
 
+#ifdef USE_DOUBLES
+#define TYPE_DATA Float
+#else
+#define TYPE_DATA Single
+#endif
+
 
 /**                                                                             
  * @brief Initizing XML scheme for h5 output files (needed for processing files with paraview)              
@@ -17,21 +23,26 @@
  * @return 
  */
 
-void init_xml(FILE *xmlfile, double time, int Nx, int Ny, double Lx, double Ly){
+void init_xml(FILE *xmlfile, TYPE_REAL time, int Nx, int Ny, TYPE_REAL Lx, TYPE_REAL Ly){
 
     int     j, k, indx=0;
-    double  WaveNumbers[Nx*Ny][2];
+    TYPE_REAL  WaveNumbers[Nx*Ny][2]; 
+    TYPE_REAL  pi;
     
+    pi = (TYPE_REAL) M_PI;
+
     /* Compute Vectors with wave numbers in X and Y direction and write to HDF5  */
     for (j=0; j<Nx; j++){
       for (k=0; k<Ny; k++){
-	WaveNumbers[indx][0] = 2.*k*atan(4.0)/Ly;
-	WaveNumbers[indx][1] = 2.*j*atan(4.0)/Lx;
+	WaveNumbers[indx][0] = 2 * k * pi / Ly;
+	WaveNumbers[indx][1] = 2 * j * pi / Lx;
+     
 	indx += 1;
 	  }
     }
 
-    FileID = create_file_2d("data_coordinates.h5");                                                                                  
+    FileID = create_file_2d("data_coordinates.h5");                             
+                      
     write_coordinates_2d(FileID, WaveNumbers);    
     status = close_file_2d(FileID);  
 
@@ -51,7 +62,7 @@ void init_xml(FILE *xmlfile, double time, int Nx, int Ny, double Lx, double Ly){
     /* Coordinates of the grid */
     fprintf( xmlfile, "<Geometry GeometryType=\"XY\">\n");
 
-    fprintf( xmlfile, "<DataItem DataType=\"Float\" Dimensions=\"%d 2\" Format=\"HDF\">\n", Nx*Ny);
+    fprintf( xmlfile, "<DataItem DataType=\"TYPE_DATA\" Dimensions=\"%d 2\" Format=\"HDF\">\n", Nx*Ny);
     fprintf( xmlfile, "data_coordinates.h5:/xy");
     fprintf( xmlfile, "</DataItem>\n");
 
@@ -59,15 +70,15 @@ void init_xml(FILE *xmlfile, double time, int Nx, int Ny, double Lx, double Ly){
 
     /* Values on the grid points --> Initial Conditions */
     fprintf( xmlfile, "<Attribute AttributeType=\"Scalar\" Center=\"Node\" Name=\"Phi\">\n");
-    fprintf( xmlfile, "<DataItem DataType=\"Float\" Dimensions=\"%d 1\" Format=\"HDF\">data0.1.h5:/phi</DataItem>\n",Nx*Ny);
+    fprintf( xmlfile, "<DataItem DataType=\"TYPE_DATA\" Dimensions=\"%d 1\" Format=\"HDF\">data0.1.h5:/phi</DataItem>\n",Nx*Ny);
     fprintf( xmlfile, "</Attribute>\n");
 
     fprintf( xmlfile, "<Attribute AttributeType=\"Scalar\" Center=\"Node\" Name=\"Eta\">\n");
-    fprintf( xmlfile, "<DataItem DataType=\"Float\" Dimensions=\"%d 1\" Format=\"HDF\">data0.1.h5:/eta</DataItem>\n",Nx*Ny);
+    fprintf( xmlfile, "<DataItem DataType=\"TYPE_DATA\" Dimensions=\"%d 1\" Format=\"HDF\">data0.1.h5:/eta</DataItem>\n",Nx*Ny);
     fprintf( xmlfile, "</Attribute>\n");
 
     fprintf( xmlfile, "<Attribute AttributeType=\"Scalar\" Center=\"Node\" Name=\"Bathy\">\n");
-    fprintf( xmlfile, "<DataItem DataType=\"Float\" Dimensions=\"%d 1\" Format=\"HDF\">data0.1.h5:/bat</DataItem>\n",Nx*Ny);
+    fprintf( xmlfile, "<DataItem DataType=\"TYPE_DATA\" Dimensions=\"%d 1\" Format=\"HDF\">data0.1.h5:/bat</DataItem>\n",Nx*Ny);
     fprintf( xmlfile, "</Attribute>\n");
     
     fprintf( xmlfile, "</Grid>\n");
@@ -81,7 +92,7 @@ void init_xml(FILE *xmlfile, double time, int Nx, int Ny, double Lx, double Ly){
  * @return 
  */
 
-void write_xml(FILE *xmlfile, double time, char *datafile){
+void write_xml(FILE *xmlfile, TYPE_REAL time, char *datafile){
 
    /* Print all information for zeroth time step */
     fprintf( xmlfile,"<Grid Name=\"Cells\" GridType=\"Uniform\">\n");
@@ -93,7 +104,7 @@ void write_xml(FILE *xmlfile, double time, char *datafile){
     /* Coordinates of the grid */
     fprintf( xmlfile, "<Geometry GeometryType=\"XY\">\n");
 
-    fprintf( xmlfile, "<DataItem DataType=\"Float\" Dimensions=\"%d 2\" Format=\"HDF\">\n", Nx*Ny);
+    fprintf( xmlfile, "<DataItem DataType=\"TYPE_DATA\" Dimensions=\"%d 2\" Format=\"HDF\">\n", Nx*Ny);
     fprintf( xmlfile, "data_coordinates.h5:/xy");
     fprintf( xmlfile, "</DataItem>\n");
 
@@ -101,15 +112,15 @@ void write_xml(FILE *xmlfile, double time, char *datafile){
 
     /* Values on the grid points --> Initial Conditions */
     fprintf( xmlfile, "<Attribute AttributeType=\"Scalar\" Center=\"Node\" Name=\"Phi\">\n");
-    fprintf( xmlfile, "<DataItem DataType=\"Float\" Dimensions=\"%d 1\" Format=\"HDF\">%s:/phi</DataItem>\n",Nx*Ny, datafile);
+    fprintf( xmlfile, "<DataItem DataType=\"TYPE_DATA\" Dimensions=\"%d 1\" Format=\"HDF\">%s:/phi</DataItem>\n",Nx*Ny, datafile);
     fprintf( xmlfile, "</Attribute>\n");
 
     fprintf( xmlfile, "<Attribute AttributeType=\"Scalar\" Center=\"Node\" Name=\"Eta\">\n");
-    fprintf( xmlfile, "<DataItem DataType=\"Float\" Dimensions=\"%d 1\" Format=\"HDF\">%s:/eta</DataItem>\n",Nx*Ny, datafile);
+    fprintf( xmlfile, "<DataItem DataType=\"TYPE_DATA\" Dimensions=\"%d 1\" Format=\"HDF\">%s:/eta</DataItem>\n",Nx*Ny, datafile);
     fprintf( xmlfile, "</Attribute>\n");
 
     fprintf( xmlfile, "<Attribute AttributeType=\"Scalar\" Center=\"Node\" Name=\"Bathy\">\n");
-    fprintf( xmlfile, "<DataItem DataType=\"Float\" Dimensions=\"%d 1\" Format=\"HDF\">%s:/bat</DataItem>\n",Nx*Ny, datafile);
+    fprintf( xmlfile, "<DataItem DataType=\"TYPE_DATA\" Dimensions=\"%d 1\" Format=\"HDF\">%s:/bat</DataItem>\n",Nx*Ny, datafile);
     fprintf( xmlfile, "</Attribute>\n");
     
     fprintf( xmlfile, "</Grid>\n");

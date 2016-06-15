@@ -19,10 +19,10 @@
 
 
 void get_params(char* filename);
-void get_ic_2d(char* filename, double* u1, double* u2, double* u3);
+void get_ic_2d(char* filename, TYPE_REAL* u1, TYPE_REAL* u2, TYPE_REAL* u3);
 hid_t create_file_2d(char* filename);
 hid_t open_file_2d(char* filename);
 herr_t close_file_2d(hid_t file);
-void write_header_2d(hid_t file, double time);
-void write_field_2d(hid_t file, double* eta, double* phi, double* bat);
-void write_extra_2d(hid_t file, double* array1, double* array2);
+void write_header_2d(hid_t file, TYPE_REAL time);
+void write_field_2d(hid_t file, TYPE_REAL* eta, TYPE_REAL* phi, TYPE_REAL* bat);
+void write_extra_2d(hid_t file, TYPE_REAL* array1, TYPE_REAL* array2);

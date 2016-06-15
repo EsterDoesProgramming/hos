@@ -11,31 +11,29 @@
 
 /* Coeffs for RK routines and other storage room */
 static int             Nstages;
-static double*         a;
-static double*         bElem;
-static double*         c;
-static double*         cs;
-static double**        b;
+static TYPE_REAL*         a;
+static TYPE_REAL*         bElem;
+static TYPE_REAL*         c;
+static TYPE_REAL*         cs;
+static TYPE_REAL**        b;
+#ifdef USE_DOUBLES
 static fftw_complex    *htemp;
 static fftw_complex    *fun;
+#else
+static fftwf_complex    *htemp;
+static fftwf_complex    *fun;
+#endif
 
+#ifdef USE_DOUBLES
+void sol_update_RK(fftw_complex* u,TYPE_REAL* t,TYPE_REAL dt,char* dtflag){
+#else
+void sol_update_RK(fftwf_complex* u,TYPE_REAL* t,TYPE_REAL dt,char* dtflag){
+#endif
 
-void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
-    
     ptrdiff_t s, p;
     
     for (s=0; s<Nstages; s++) {
     
-        
-//        for (i=0; i<local_Nx; i++) {
-//    
-//            for (j=0; j<Ny/2+1; j++) {
-//            
-//                htemp[(Ny/2+1)*i + j]=u[(Ny/2+1)*i + j];
-//            
-//            }
-//        
-//        }
 
         for (i=0; i<local_N; i++) {
             
@@ -43,16 +41,6 @@ void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
 
         }
 
-
-//        for (i=0; i<local_Nx; i++) {
-//    
-//            for (j=0; j<Ny/2+1; j++) {
-//            
-//                htemp[alloc_local + (Ny/2+1)*i + j]=u[alloc_local + (Ny/2+1)*i + j];
-//            
-//            }
-//        
-//        }
 
         for (i=0; i<local_N; i++) {
             
@@ -63,17 +51,6 @@ void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
         
         for (p=0; p<s; p++) {
             
-//            for (i=0; i<local_Nx; i++) {
-//                
-//                for (j=0; j<Ny/2+1; j++) {
-//                    
-//                    htemp[(Ny/2+1)*i + j] = htemp[(Ny/2+1)*i + j] + dt*b[s][p]*fun[2*alloc_local*p + (Ny/2+1)*i + j];
-//                    
-//                }
-//                
-//            }
-            
-
             for (i=0; i<local_N; i++) {
             
                 htemp[i] = htemp[i] + dt*b[s][p]*fun[2*alloc_local*p + i];
@@ -81,25 +58,11 @@ void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
             }
             
             
-//            for (i=0; i<local_Nx; i++) {
-//                
-//                for (j=0; j<Ny/2+1; j++) {
-//                    
-//                    htemp[alloc_local + (Ny/2+1)*i + j] = htemp[alloc_local +(Ny/2+1)*i + j] + dt*b[s][p]*fun[2*alloc_local*p + alloc_local + (Ny/2+1)*i + j];
-//                    
-//                }
-//                
-//            }
-
-
             for (i=0; i<local_N; i++) {
             
                 htemp[alloc_local + i] = htemp[alloc_local + i] + dt*b[s][p]*fun[2*alloc_local*p + alloc_local + i];
 
             }
- 
-
-
             
         }
      
@@ -134,16 +97,6 @@ void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
     
     for (s=0; s<Nstages; s++) {
         
-//        for (i=0; i<local_Nx; i++) {
-//                
-//            for (j=0; j<Ny/2+1; j++) {
-//                    
-//                u[(Ny/2+1)*i + j] = u[(Ny/2+1)*i + j] + dt*c[s]*fun[2*alloc_local*s + (Ny/2+1)*i + j];
-//                    
-//            }
-//                
-//        }
-        
         for (i=0; i<local_N; i++) {
             
                 u[i] = u[i] + dt*c[s]*fun[2*alloc_local*s + i];
@@ -151,17 +104,6 @@ void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
         }
 
             
-            
-//       for (i=0; i<local_Nx; i++) {
-//            
-//            for (j=0; j<Ny/2+1; j++) {
-//                    
-//                u[alloc_local + (Ny/2+1)*i + j] = u[alloc_local + (Ny/2+1)*i + j] + dt*c[s]*fun[2*alloc_local*s + alloc_local + (Ny/2+1)*i + j];
-//                    
-//            }
-//                
-//        }
-        
         
         for (i=0; i<local_N; i++) {
             
@@ -174,8 +116,7 @@ void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
     }
 
     
-    t[0] = t[0] + dt;
-    
+    t[0] = t[0] + dt;    
     
 }
 
@@ -213,15 +154,19 @@ void Setup_TimeScheme(int scheme_flg){
 
     }
     
-
+    #ifdef USE_DOUBLES
     fun = fftw_alloc_complex(2 * Nstages * alloc_local);
     htemp = fftw_alloc_complex(2 * alloc_local);
-        
-    a     = malloc (sizeof(double)*Nstages);
-    b     = malloc (sizeof(double*)*Nstages);
-    bElem = malloc (sizeof(double)*(Nstages*Nstages));
-    c     = malloc (sizeof(double)*Nstages);
-    cs    = malloc (sizeof(double)*Nstages);
+    #else
+    fun = fftwf_alloc_complex(2 * Nstages * alloc_local);
+    htemp = fftwf_alloc_complex(2 * alloc_local);
+    #endif
+
+    a     = malloc (sizeof(TYPE_REAL)*Nstages);
+    b     = malloc (sizeof(TYPE_REAL*)*Nstages);
+    bElem = malloc (sizeof(TYPE_REAL)*(Nstages*Nstages));
+    c     = malloc (sizeof(TYPE_REAL)*Nstages);
+    cs    = malloc (sizeof(TYPE_REAL)*Nstages);
             
     for (n=0; n<Nstages; n++) {
         

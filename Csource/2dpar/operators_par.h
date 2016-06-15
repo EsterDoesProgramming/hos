@@ -11,16 +11,21 @@
 
 #ifndef euler_operators_h
 #define euler_operators_h
-
-
-
 #endif
 
 
+#ifdef USE_DOUBLES
 void Dx(fftw_complex* hu, fftw_complex* hu_x);
 void Dy(fftw_complex* hu, fftw_complex* hu_y);
 void Dz(const fftw_complex* hu, fftw_complex* hu_z);
 void Mult(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hprod);
 void Sum(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hsum);
 void Dealias(fftw_complex* hu);
-
+#else
+void Dx(fftwf_complex* hu, fftwf_complex* hu_x);
+void Dy(fftwf_complex* hu, fftwf_complex* hu_y);
+void Dz(const fftwf_complex* hu, fftwf_complex* hu_z);
+void Mult(fftwf_complex* hu1, fftwf_complex* hu2, fftwf_complex* hprod);
+void Sum(fftwf_complex* hu1, fftwf_complex* hu2, fftwf_complex* hsum);
+void Dealias(fftwf_complex* hu);
+#endif

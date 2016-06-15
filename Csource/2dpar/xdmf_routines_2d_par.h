@@ -16,6 +16,6 @@
 #endif
 
 
-void init_xml(FILE *xmlfile, double time, int Nx, int Ny, double Lx, double Ly);
-void write_xml(FILE *xmlfile, double time, char *datafile);
+void init_xml(FILE *xmlfile, TYPE_REAL time, int Nx, int Ny, TYPE_REAL Lx, TYPE_REAL Ly);
+void write_xml(FILE *xmlfile, TYPE_REAL time, char *datafile);
 void close_xml(FILE *xmlfile);

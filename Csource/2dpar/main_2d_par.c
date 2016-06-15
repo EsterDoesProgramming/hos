@@ -9,7 +9,11 @@
 #define DIM 3
 #define BUFSIZE 256
 #define INIT_DATA_BUFSIZE 128
+#ifdef USE_DOUBLES
 #define EPSILON 0.00000001
+#else
+#define EPSILON 0.00001
+#endif
 
 #define THREADS 0
 #define N_THREADS 2
@@ -34,16 +38,22 @@ int main(int argc, char **argv)
 {
     
     int         scheme_flg, nfld;
-    double      *eta, *phi, *phib, *phitotal, *bat;
-    double      *velwM, *velwM2;
-    //double      *velw2M, *velw2M2;
-    double      t, dt, t_old;
+    TYPE_REAL      *eta, *phi, *phib, *phitotal, *bat;
+    TYPE_REAL      *velwM, *velwM2;
+    //TYPE_REAL      *velw2M, *velw2M2;
+    TYPE_REAL      t, dt, t_old;
     char        init_data_buff[INIT_DATA_BUFSIZE], init_pars_buff[INIT_DATA_BUFSIZE], subid_buff[2], nfld_buff[5], dtflag[20];
     
+#ifdef USE_DOUBLES
     fftw_complex    *heta, *hphi, *hphib, *hphitotal, *hbat;
     fftw_complex    *hvelwM, *hvelwM2, *hvelw2M, *hvelw2M2;
+#else
+    fftwf_complex    *heta, *hphi, *hphib, *hphitotal, *hbat;
+    fftwf_complex    *hvelwM, *hvelwM2, *hvelw2M, *hvelw2M2;
+#endif
+
     clock_t       beginTime, endTime;
-    double        time_spent;
+    TYPE_REAL        time_spent;
     FILE          *xmlfile;
 
     if (mpi_rank == 0) {
@@ -89,9 +99,13 @@ int main(int argc, char **argv)
     
     if (mpi_rank==0) {
         printf("Reading initial data from:\t%s\n",init_data_buff);
+	#ifndef USE_DOUBLES
+	printf("NOTE: Model runs with SINGLE precision!\n");
+	#endif
     }
+
     MPI_Barrier(comm);
-   
+
     nfld = 0;
     strncpy(savefile_buff,"\0",SAVE_FILE_BUFSIZE);
     strcat(savefile_buff,"data");
@@ -108,18 +122,17 @@ int main(int argc, char **argv)
     strcat(savefile2_buff,".");
     strcat(savefile2_buff,subid_buff);
     strcat(savefile2_buff,".h5");
-
     
     fNx=Nx;
     fNy=Ny;
-    
-    
+
+#ifdef USE_DOUBLES
+
 #if THREADS == 0
     fftw_mpi_init();
 #elif THREADS == 1
     if (threads_ok) threads_ok = fftw_init_threads();
 #endif
-    
     
     /* get local data size and allocate. */
     /* NOTE: alloc_local can be greater than local_Nx*(Ny/2+1) */
@@ -131,9 +144,7 @@ int main(int argc, char **argv)
     local_N = Nx*local_Nyhpo;
 #endif
     
-    
     printf("Process %d:\tlocal size = %td,\tlocal x-size = %td,\tlocal y-size (transp-out) = %td.\n",mpi_rank,alloc_local,local_Nx,local_Nyhpo);
-
 
     eta = fftw_alloc_real(4 * alloc_local);
     heta = fftw_alloc_complex(2 * alloc_local);
@@ -179,6 +190,60 @@ int main(int argc, char **argv)
     ifftp = fftw_mpi_plan_dft_c2r_2d(fNx, fNy, hf, f, MPI_COMM_WORLD, FFTW_MEASURE|FFTW_MPI_TRANSPOSED_IN);
 #endif
     
+    //else USE_DOUBLES
+#else 
+
+#if THREADS == 0
+    fftwf_mpi_init();
+#elif THREADS == 1
+    if (threads_ok) threads_ok = fftwf_init_threads();
+#endif
+    
+    /* get local data size and allocate. */
+    /* NOTE: alloc_local can be greater than local_Nx*(Ny/2+1) */
+#if FFT_TRANSPOSE == 0
+    alloc_local = fftwf_mpi_local_size_2d(fNx, fNy/2+1, MPI_COMM_WORLD, &local_Nx, &local_0_start);
+    local_N = local_Nx*(Ny/2 + 1);
+#elif FFT_TRANSPOSE == 1
+    alloc_local = fftwf_mpi_local_size_2d_transposed(fNx, fNy/2+1, MPI_COMM_WORLD, &local_Nx, &local_0_start, &local_Nyhpo, &local_1_start);
+    local_N = Nx*local_Nyhpo;
+#endif
+
+    printf("Process %d:\tlocal size = %td,\tlocal x-size = %td,\tlocal y-size (transp-out) = %td.\n",mpi_rank,alloc_local,local_Nx,local_Nyhpo);
+
+    eta  = fftwf_alloc_real(4 * alloc_local);
+    heta = fftwf_alloc_complex(2 * alloc_local);
+    bat  = fftwf_alloc_real(2 * alloc_local);
+    hbat = fftwf_alloc_complex(alloc_local);
+
+    phi  = &eta[2 * alloc_local];
+    hphi = &heta[alloc_local];
+
+    f  = fftwf_alloc_real(2 * alloc_local);
+    hf = fftwf_alloc_complex(alloc_local);
+    
+    temp1    = fftwf_alloc_real(2 * alloc_local);
+    velwM    = fftwf_alloc_real(2 * alloc_local);
+    velwM2   = fftwf_alloc_real(2 * alloc_local);
+    hvelwM   = fftwf_alloc_complex(alloc_local);
+    hvelwM2  = fftwf_alloc_complex(alloc_local);
+    hvelw2M  = fftwf_alloc_complex(alloc_local);
+    hvelw2M2 = fftwf_alloc_complex(alloc_local);
+
+    /* Setup fft routines */
+#if THREADS == 1
+    if (threads_ok) fftwf_plan_with_nthreads(N_THREADS);
+#endif 
+    
+#if FFT_TRANSPOSE == 0
+    fftp = fftwf_mpi_plan_dft_r2c_2d(fNx, fNy, f, hf, MPI_COMM_WORLD, FFTW_MEASURE);
+    ifftp = fftwf_mpi_plan_dft_c2r_2d(fNx, fNy, hf, f, MPI_COMM_WORLD, FFTW_MEASURE);
+#elif FFT_TRANSPOSE == 1
+    fftp = fftwf_mpi_plan_dft_r2c_2d(fNx, fNy, f, hf, MPI_COMM_WORLD, FFTW_MEASURE|FFTW_MPI_TRANSPOSED_OUT);
+    ifftp = fftwf_mpi_plan_dft_c2r_2d(fNx, fNy, hf, f, MPI_COMM_WORLD, FFTW_MEASURE|FFTW_MPI_TRANSPOSED_IN);
+#endif
+
+#endif 
 
     /* Read initial data */
     get_ic_2d(init_data_buff, eta, phi, bat);
@@ -207,12 +272,12 @@ int main(int argc, char **argv)
     write_header_2d(savefileid, t);
     write_field_2d(savefileid, eta, phi, bat);
     status = close_file_2d(savefileid);
-
-    xmlfile = fopen("xmlfile.xmf","w");
+    
+    xmlfile = fopen("HOS_data.xmf","w");
     init_xml(xmlfile,t,Nx,Ny,Lx,Ly);
     
     if (mpi_rank == 0) {
-            printf("Datafile '%s' written at t=%f\n",savefile_buff,t);
+      printf("Datafile '%s' written at t=%f\n",savefile_buff,(double) t);
     }
     
     
@@ -223,7 +288,7 @@ int main(int argc, char **argv)
         status = close_file_2d(savefileid2);
         
         if (mpi_rank == 0) {
-            printf("Datafile '%s' written at t=%f\n",savefile2_buff,t);
+	  printf("Datafile '%s' written at t=%f\n",savefile2_buff,(double) t);
         }
         
     }
@@ -263,7 +328,7 @@ int main(int argc, char **argv)
 	    write_xml(xmlfile,t,savefile_buff);
            
             if (mpi_rank==0) {
-                printf("Datafile '%s' written at t=%f\n",savefile_buff,t);
+	      printf("Datafile '%s' written at t=%f\n",savefile_buff,(double) t);
             }
             
             if (saveflg > 1) {
@@ -282,7 +347,7 @@ int main(int argc, char **argv)
                 status = close_file_2d(savefileid2);
                 
                 if (mpi_rank==0) {
-                    printf("Datafile '%s' written at t=%f\n",savefile2_buff,t);
+		  printf("Datafile '%s' written at t=%f\n",savefile2_buff, (double) t);
                 }
 
             }
@@ -293,17 +358,24 @@ int main(int argc, char **argv)
     
     close_xml(xmlfile);
 
+#ifdef USE_DOUBLES
     fftw_destroy_plan(fftp);
     fftw_destroy_plan(ifftp);
     free(eta);
     fftw_free(heta);
-    
+#else
+    fftwf_destroy_plan(fftp);
+    fftwf_destroy_plan(ifftp);
+    free(eta);
+    fftwf_free(heta);
+#endif
+
     MPI_Finalize();
 
     if (mpi_rank == 0) {
 
     endTime = clock();
-    time_spent = (double)(endTime - beginTime) / CLOCKS_PER_SEC;
+    time_spent = (TYPE_REAL)(endTime - beginTime) / CLOCKS_PER_SEC;
     printf("Total computational time: %10.2f s.\n", time_spent);
 
     }

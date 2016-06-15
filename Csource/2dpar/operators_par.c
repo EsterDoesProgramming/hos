@@ -16,10 +16,13 @@
  */
 
 /* Spectral x-derivative */
+#ifdef USE_DOUBLES
 void Dx(fftw_complex* hu, fftw_complex* hu_x){
+#else
+void Dx(fftwf_complex* hu, fftwf_complex* hu_x){
+#endif
 
-
-    double kx;
+    TYPE_REAL kx;
     ptrdiff_t index;
 
 #if FFT_TRANSPOSE == 0
@@ -78,9 +81,13 @@ void Dx(fftw_complex* hu, fftw_complex* hu_x){
  */
 
 /* Spectral y-derivative */
+#ifdef USE_DOUBLES
 void Dy(fftw_complex* hu, fftw_complex* hu_y){
+#else
+void Dy(fftwf_complex* hu, fftwf_complex* hu_y){
+#endif
 
-    double ky;
+    TYPE_REAL ky;
     ptrdiff_t index;
     
 #if FFT_TRANSPOSE == 0
@@ -119,11 +126,14 @@ void Dy(fftw_complex* hu, fftw_complex* hu_y){
  */
 
 /* Spectral z-derivative for deep water */
+#ifdef USE_DOUBLES
 void Dz(const fftw_complex* hu, fftw_complex* hu_z){
-
+#else
+void Dz(const fftwf_complex* hu, fftwf_complex* hu_z){
+#endif
 
     ptrdiff_t index;
-    double kx, ky, kz, tkh, h;
+    TYPE_REAL kx, ky, kz, tkh, h;
     
     h = 1000;
 
@@ -196,8 +206,11 @@ void Dz(const fftw_complex* hu, fftw_complex* hu_z){
 
 /* Compute product between two arrays. */
 /* The operation can be executed fully in-place hu1=hu2=hprod. */
+#ifdef USE_DOUBLES
 void Mult(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hprod){
-    
+#else
+void Mult(fftwf_complex* hu1, fftwf_complex* hu2, fftwf_complex* hprod){
+#endif
     
     ptrdiff_t index;
     
@@ -230,8 +243,11 @@ void Mult(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hprod){
  * @param hsum a fftw_complex array pointer - the sum of hu1 and hu2
  */
 
+#ifdef USE_DOUBLES
 void Sum(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hsum){
-    
+#else
+void Sum(fftwf_complex* hu1, fftwf_complex* hu2, fftwf_complex* hsum){
+#endif
     
     ptrdiff_t index, Nyhal;
     
@@ -263,7 +279,11 @@ void Sum(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hsum){
 }
 
 
+#ifdef USE_DOUBLES
 void Dealias(fftw_complex* hu){
+#else
+void Dealias(fftwf_complex* hu){
+#endif
 
     int mx, my;
     
